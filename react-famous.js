@@ -32,6 +32,7 @@ var ReactComponent = require('react/lib/ReactComponent');
 var ReactMount = require('react/lib/ReactMount');
 var ReactMultiChild = require('react/lib/ReactMultiChild');
 var ReactDOMComponent = require('react/lib/ReactDOMComponent');
+var ReactUpdates = require('react/lib/ReactUpdates');
 
 var ReactComponentMixin = ReactComponent.Mixin;
 
@@ -41,6 +42,16 @@ var merge = require('react/lib/merge');
 // Used for comparison during mounting to avoid a lot of null checks
 var BLANK_PROPS = {};
 
+// Put React on famo.us's tick
+var FamousBatchingStrategy = {
+  isBatchingUpdates: true,
+  batchedUpdates: function(callback, param) {
+    callback(param);
+  }
+};
+
+ReactUpdates.injection.injectBatchingStrategy(FamousBatchingStrategy);
+Engine.on('prerender', ReactUpdates.flushBatchedUpdates.bind(ReactUpdates));
 
 function createComponent(name) {
   var ReactFamousComponent = function() {};
