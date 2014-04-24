@@ -4,8 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "webpack --progress --colors --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "envify": "^1.2.1",
+    "react": "^0.10.0"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.10.0",
+    "webpack": "^1.1.8"
+  }
 }
