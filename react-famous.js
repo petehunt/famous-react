@@ -85,30 +85,8 @@ var ContainerMixin = merge(ReactMultiChild.Mixin, {
    * @protected
    */
   moveChild: function(child, toIndex) {
-    // TODO
+    // Famous doesn't let you move shit around.
     return;
-    var childNode = child._mountImage;
-    var mostRecentlyPlacedChild = this._mostRecentlyPlacedChild;
-    if (mostRecentlyPlacedChild == null) {
-      // I'm supposed to be first.
-      if (childNode.previousSibling) {
-        if (this.node.firstChild) {
-          childNode.injectBefore(this.node.firstChild);
-        } else {
-          childNode.inject(this.node);
-        }
-      }
-    } else {
-      // I'm supposed to be after the previous one.
-      if (mostRecentlyPlacedChild.nextSibling !== childNode) {
-        if (mostRecentlyPlacedChild.nextSibling) {
-          childNode.injectBefore(mostRecentlyPlacedChild.nextSibling);
-        } else {
-          childNode.inject(this.node);
-        }
-      }
-    }
-    this._mostRecentlyPlacedChild = childNode;
   },
 
   /**
@@ -121,24 +99,6 @@ var ContainerMixin = merge(ReactMultiChild.Mixin, {
   createChild: function(child, childNode) {
     child._mountImage = childNode;
     this.node.add(childNode);
-    return;
-    var mostRecentlyPlacedChild = this._mostRecentlyPlacedChild;
-    if (mostRecentlyPlacedChild == null) {
-      // I'm supposed to be first.
-      if (this.node.firstChild) {
-        childNode.injectBefore(this.node.firstChild);
-      } else {
-        childNode.inject(this.node);
-      }
-    } else {
-      // I'm supposed to be after the previous one.
-      if (mostRecentlyPlacedChild.nextSibling) {
-        childNode.injectBefore(mostRecentlyPlacedChild.nextSibling);
-      } else {
-        childNode.inject(this.node);
-      }
-    }
-    this._mostRecentlyPlacedChild = childNode;
   },
 
   /**
@@ -179,7 +139,6 @@ var ContainerMixin = merge(ReactMultiChild.Mixin, {
         var child = this._renderedChildren[key];
         child._mountImage = mountedImages[i];
         this.node.add(mountedImages[i]);
-        //mountedImages[i].inject(this.node);
         i++;
       }
     }
@@ -209,91 +168,26 @@ var Context = createComponent(
     return '<div ' + idMarkup + '></div>';
   },
 
-  setApprovedDOMProperties: function(nextProps) {
-    // TODO: This is a major hack. Either make ART or React internals fit better
-    var prevProps = this.props;
-
-    var prevPropsSubset = {
-      accesskey: prevProps.accesskey,
-      className: prevProps.className,
-      draggable: prevProps.draggable,
-      role: prevProps.role,
-      style: prevProps.style,
-      tabindex: prevProps.tabindex,
-      title: prevProps.title
-    };
-
-    var nextPropsSubset = {
-      accesskey: nextProps.accesskey,
-      className: nextProps.className,
-      draggable: nextProps.draggable,
-      role: nextProps.role,
-      style: nextProps.style, // TODO: ART's Canvas Mode overrides cursor
-      tabindex: nextProps.tabindex,
-      title: nextProps.title  // TODO: ART's Canvas Mode overrides surface title
-      // TODO: event listeners
-    };
-
-    // We hack the internals of ReactDOMComponent to only update some DOM
-    // properties that won't override anything important that's internal to ART.
-    this.props = nextPropsSubset;
-    this._updateDOMProperties(prevPropsSubset);
-
-    // Reset to normal state
-    this.props = prevProps;
-  },
-
   componentDidMount: function() {
     this.node = Engine.createContext(this.getDOMNode());
-
-    var props = this.props;
-
-    /*
-    this.node = Mode.Surface(+props.width, +props.height);
-    var surfaceElement = this.node.toElement();
-
-    // Replace placeholder hoping that nothing important happened to it
-    var node = this.getDOMNode();
-    if (node.parentNode) {
-      node.parentNode.replaceChild(surfaceElement, node);
-    }
-    ReactMount.setID(surfaceElement, this._rootNodeID);
-    */
-
-    this.props = {style:{}};
-    this.setApprovedDOMProperties(props);
 
     var transaction = ReactComponent.ReactReconcileTransaction.getPooled();
     transaction.perform(
       this.mountAndInjectChildren,
       this,
-      props.children,
+      this.props.children,
       transaction
     );
     ReactComponent.ReactReconcileTransaction.release(transaction);
-
-    this.props = props;
   },
 
   receiveComponent: function(nextComponent, transaction) {
     var props = nextComponent.props;
     var node = this.node;
 
-    /*
-    if (this.props.width != props.width || this.props.width != props.height) {
-      node.resize(+props.width, +props.height);
-    }
-    */
-
-    this.setApprovedDOMProperties(props);
+    this._updateDOMProperties(props);
 
     this.updateChildren(props.children, transaction);
-
-    /*
-    if (node.render) {
-      node.render();
-    }
-    */
 
     this.props = props;
   },
@@ -305,111 +199,9 @@ var Context = createComponent(
 
 });
 
-/*
-// Various nodes that can go into a surface
-
-var EventTypes = {
-  onMouseMove: 'mousemove',
-  onMouseOver: 'mouseover',
-  onMouseOut: 'mouseout',
-  onMouseUp: 'mouseup',
-  onMouseDown: 'mousedown',
-  onClick: 'click'
-};
-*/
-
 var SurfaceMixin = merge(ReactComponentMixin, {
-
-  putEventListener: function(type, listener) {
-    // TODO
-    return;
-    var subscriptions = this.subscriptions || (this.subscriptions = {});
-    var listeners = this.listeners || (this.listeners = {});
-    listeners[type] = listener;
-    if (listener) {
-      if (!subscriptions[type]) {
-        subscriptions[type] = this.node.subscribe(type, listener, this);
-      }
-    } else {
-      if (subscriptions[type]) {
-        subscriptions[type]();
-        delete subscriptions[type];
-      }
-    }
-  },
-
-  handleEvent: function(event) {
-    // TODO
-    return;
-    var listener = this.listeners[event.type];
-    if (!listener) {
-      return;
-    }
-    if (typeof listener === 'function') {
-      listener.call(this, event);
-    } else if (listener.handleEvent) {
-      listener.handleEvent(event);
-    }
-  },
-
-  destroyEventListeners: function() {
-    // TODO
-    return;
-    var subscriptions = this.subscriptions;
-    if (subscriptions) {
-      for (var type in subscriptions) {
-        subscriptions[type]();
-      }
-    }
-    this.subscriptions = null;
-    this.listeners = null;
-  },
-
   applyNodeProps: function(oldProps, props) {
     this.node.setOptions(props);
-    return;
-    var node = this.node;
-
-    var scaleX = props.scaleX != null ? props.scaleX :
-                 props.scale != null ? props.scale : 1;
-    var scaleY = props.scaleY != null ? props.scaleY :
-                 props.scale != null ? props.scale : 1;
-
-    pooledTransform
-      .transformTo(1, 0, 0, 1, 0, 0)
-      .move(props.x || 0, props.y || 0)
-      .rotate(props.rotation || 0, props.originX, props.originY)
-      .scale(scaleX, scaleY, props.originX, props.originY);
-
-    if (props.transform != null) {
-      pooledTransform.transform(props.transform);
-    }
-
-    if (node.xx !== pooledTransform.xx || node.yx !== pooledTransform.yx ||
-        node.xy !== pooledTransform.xy || node.yy !== pooledTransform.yy ||
-        node.x  !== pooledTransform.x  || node.y  !== pooledTransform.y) {
-      node.transformTo(pooledTransform);
-    }
-
-    if (props.cursor !== oldProps.cursor || props.title !== oldProps.title) {
-      node.indicate(props.cursor, props.title);
-    }
-
-    if (node.blend && props.opacity !== oldProps.opacity) {
-      node.blend(props.opacity == null ? 1 : props.opacity);
-    }
-
-    if (props.visible !== oldProps.visible) {
-      if (props.visible == null || props.visible) {
-        node.show();
-      } else {
-        node.hide();
-      }
-    }
-
-    for (var type in EventTypes) {
-      this.putEventListener(EventTypes[type], props[type]);
-    }
   },
 
   mountComponentIntoNode: function(rootID, container) {
@@ -436,246 +228,9 @@ var Image = createComponent('Image', SurfaceMixin, {
   }
 });
 
-/*
-// Group
-
-var Group = createComponent('Group', NodeMixin, ContainerMixin, {
-
-  mountComponent: function(transaction) {
-    ReactComponentMixin.mountComponent.apply(this, arguments);
-    this.node = Mode.Group();
-    this.applyGroupProps(BLANK_PROPS, this.props);
-    this.mountAndInjectChildren(this.props.children, transaction);
-    return this.node;
-  },
-
-  receiveComponent: function(nextComponent, transaction) {
-    var props = nextComponent.props;
-    this.applyGroupProps(this.props, props);
-    this.updateChildren(props.children, transaction);
-    this.props = props;
-  },
-
-  applyGroupProps: function(oldProps, props) {
-    this.node.width = props.width;
-    this.node.height = props.height;
-    this.applyNodeProps(oldProps, props);
-  },
-
-  unmountComponent: function() {
-    this.destroyEventListeners();
-    this.unmountChildren();
-  }
-
-});
-
-// ClippingRectangle
-var ClippingRectangle = createComponent(
-    'ClippingRectangle', NodeMixin, ContainerMixin, {
-
-  mountComponent: function(transaction) {
-    ReactComponentMixin.mountComponent.apply(this, arguments);
-    this.node = Mode.ClippingRectangle();
-    this.applyClippingProps(BLANK_PROPS, this.props);
-    this.mountAndInjectChildren(this.props.children, transaction);
-    return this.node;
-  },
-
-  receiveComponent: function(nextComponent, transaction) {
-    var props = nextComponent.props;
-    this.applyClippingProps(this.props, props);
-    this.updateChildren(props.children, transaction);
-    this.props = props;
-  },
-
-  applyClippingProps: function(oldProps, props) {
-    this.node.width = props.width;
-    this.node.height = props.height;
-    this.node.x = props.x;
-    this.node.y = props.y;
-    this.applyNodeProps(oldProps, props);
-  },
-
-  unmountComponent: function() {
-    this.destroyEventListeners();
-    this.unmountChildren();
-  }
-
-});
-
-
-// Renderables
-
-var RenderableMixin = merge(NodeMixin, {
-
-  applyRenderableProps: function(oldProps, props) {
-    if (oldProps.fill !== props.fill) {
-      if (props.fill && props.fill.applyFill) {
-        props.fill.applyFill(this.node);
-      } else {
-        this.node.fill(props.fill);
-      }
-    }
-    if (
-      oldProps.stroke !== props.stroke ||
-      oldProps.strokeWidth !== props.strokeWidth ||
-      oldProps.strokeCap !== props.strokeCap ||
-      oldProps.strokeJoin !== props.strokeJoin ||
-      // TODO: Consider a deep check of stokeDash.
-      // This may benefit the VML version in IE.
-      oldProps.strokeDash !== props.strokeDash
-    ) {
-      this.node.stroke(
-        props.stroke,
-        props.strokeWidth,
-        props.strokeCap,
-        props.strokeJoin,
-        props.strokeDash
-      );
-    }
-    this.applyNodeProps(oldProps, props);
-  },
-
-  unmountComponent: function() {
-    this.destroyEventListeners();
-  }
-
-});
-
-// Shape
-
-var Shape = createComponent('Shape', RenderableMixin, {
-
-  mountComponent: function() {
-    ReactComponentMixin.mountComponent.apply(this, arguments);
-    this.node = Mode.Shape();
-    this.applyShapeProps(BLANK_PROPS, this.props);
-    return this.node;
-  },
-
-  receiveComponent: function(nextComponent, transaction) {
-    var props = nextComponent.props;
-    this.applyShapeProps(this.props, props);
-    this.props = props;
-  },
-
-  applyShapeProps: function(oldProps, props) {
-    var oldPath = this._oldPath;
-    var path = props.d || childrenAsString(props.children);
-    if (path !== oldPath ||
-        oldProps.width !== props.width ||
-        oldProps.height !== props.height) {
-      this.node.draw(
-        path,
-        props.width,
-        props.height
-      );
-      this._oldPath = path;
-    }
-    this.applyRenderableProps(oldProps, props);
-  }
-
-});
-
-// Text
-
-var Text = createComponent('Text', RenderableMixin, {
-
-  mountComponent: function() {
-    ReactComponentMixin.mountComponent.apply(this, arguments);
-    var props = this.props;
-    var newString = childrenAsString(props.children);
-    this.node = Mode.Text(newString, props.font, props.alignment, props.path);
-    this._oldString = newString;
-    this.applyRenderableProps(BLANK_PROPS, this.props);
-    return this.node;
-  },
-
-  isSameFont: function(oldFont, newFont) {
-    if (oldFont === newFont) {
-      return true;
-    }
-    if (typeof newFont === 'string' || typeof oldFont === 'string') {
-      return false;
-    }
-    return (
-      newFont.fontSize === oldFont.fontSize &&
-      newFont.fontStyle === oldFont.fontStyle &&
-      newFont.fontVariant === oldFont.fontVariant &&
-      newFont.fontWeight === oldFont.fontWeight &&
-      newFont.fontFamily === oldFont.fontFamily
-    );
-  },
-
-  receiveComponent: function(nextComponent, transaction) {
-    var props = nextComponent.props;
-    var oldProps = this.props;
-
-    var oldString = this._oldString;
-    var newString = childrenAsString(props.children);
-
-    if (oldString !== newString ||
-        !this.isSameFont(oldProps.font, props.font) ||
-        oldProps.alignment !== props.alignment ||
-        oldProps.path !== props.path) {
-      this.node.draw(
-        newString,
-        props.font,
-        props.alignment,
-        props.path
-      );
-      this._oldString = newString;
-    }
-
-    this.applyRenderableProps(oldProps, props);
-    this.props = props;
-  }
-
-});
-
-// Declarative fill type objects - API design not finalized
-
-var slice = Array.prototype.slice;
-
-function LinearGradient(stops, x1, y1, x2, y2) {
-  this.args = slice.call(arguments);
-};
-LinearGradient.prototype.applyFill = function(node) {
-  node.fillLinear.apply(node, this.args);
-};
-
-function RadialGradient(stops, fx, fy, rx, ry, cx, cy) {
-  this.args = slice.call(arguments);
-};
-RadialGradient.prototype.applyFill = function(node) {
-  node.fillRadial.apply(node, this.args);
-};
-
-function Pattern(url, width, height, left, top) {
-  this.args = slice.call(arguments);
-};
-Pattern.prototype.applyFill = function(node) {
-  node.fillImage.apply(node, this.args);
-};
-
-*/
-
 var ReactFamous = {
   Context: Context,
   Image: Image
-  /*
-  LinearGradient: LinearGradient,
-  RadialGradient: RadialGradient,
-  Pattern: Pattern,
-  Transform: Transform,
-  Path: Mode.Path,
-  Surface: Surface,
-  Group: Group,
-  ClippingRectangle: ClippingRectangle,
-  Shape: Shape,
-  Text: Text
-  */
-
 };
 
 module.exports = ReactFamous;
