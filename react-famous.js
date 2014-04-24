@@ -41,20 +41,6 @@ var merge = require('react/lib/merge');
 // Used for comparison during mounting to avoid a lot of null checks
 var BLANK_PROPS = {};
 
-// Utilities
-
-function childrenAsString(children) {
-  if (!children) {
-    return '';
-  }
-  if (typeof children === 'string') {
-    return children;
-  }
-  if (children.length) {
-    return children.join('\n');
-  }
-  return '';
-}
 
 function createComponent(name) {
   var ReactFamousComponent = function() {};
