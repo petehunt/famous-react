@@ -36,7 +36,11 @@ var App = React.createClass({
   },
   render: function() {
     var imageUrl = this.state.famous ? 'famous_logo.png' : 'react_logo.png';
-    return <Context><Image size={[200, 200]} content={imageUrl} /></Context>;
+    return (
+      <Context>
+        <Image size={[200, 200]} content={imageUrl} />
+      </Context>
+    );
   }
 });
 React.renderComponent(App(), document.body);
