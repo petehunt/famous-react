@@ -42,6 +42,6 @@ var App = React.createClass({
 React.renderComponent(App(), document.body);
 
 
-Timer.setTimeout(function() {
-  React.renderComponent(<h1>PEACE</h1>, document.body);
-}, 5000);
+//Timer.setTimeout(function() {
+//  React.renderComponent(<h1>PEACE</h1>, document.body);
+//}, 5000);
