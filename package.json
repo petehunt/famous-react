@@ -11,7 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "envify": "^1.2.1",
-    "react": "^0.10.0"
+    "react": "^0.10.0",
+    "famous": "http://code.famo.us/famous/common/famous-0.2.2.tar.gz"
   },
   "devDependencies": {
     "jsx-loader": "^0.10.0",

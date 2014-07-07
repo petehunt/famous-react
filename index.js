@@ -1,5 +1,5 @@
 /** @jsx React.DOM */
-var Timer = require('./famous/utilities/Timer');
+var Timer = require('famous/utilities/Timer');
 var React = require('react');
 var ReactFamous = require('./react-famous');
 
