@@ -23,8 +23,8 @@
 
 "use strict";
 
-var Engine = require('./famous/core/Engine');
-var ImageSurface = require('./famous/surfaces/ImageSurface');
+var Engine = require('famous/core/Engine');
+var ImageSurface = require('famous/surfaces/ImageSurface');
 
 var DOMPropertyOperations = require('react/lib/DOMPropertyOperations');
 var ReactBrowserComponentMixin = require('react/lib/ReactBrowserComponentMixin');
